@@ -6,13 +6,22 @@ import (
 )
 
 func main() {
+	const filepathRoot = "."
+	const port = "8080"
+	cfg := apiConfig{}
+
 	mux := http.NewServeMux()
-	server := http.Server{
+	mux.Handle("/app/*", http.StripPrefix("/app", cfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot)))))
+
+	mux.HandleFunc("/healthz", handlerReadiness)
+	mux.HandleFunc("/metrics", cfg.handlerMetrics)
+	mux.HandleFunc("/reset", cfg.handlerReset)
+
+	srv := &http.Server{
+		Addr:    ":" + port,
 		Handler: mux,
-		Addr:    "localhost:8080",
 	}
-	err := server.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
+	log.Fatal(srv.ListenAndServe())
 }
