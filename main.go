@@ -11,11 +11,12 @@ func main() {
 	cfg := apiConfig{}
 
 	mux := http.NewServeMux()
-	mux.Handle("/app/*", http.StripPrefix("/app", cfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot)))))
+	mux.Handle("GET /app/*", http.StripPrefix("/app", cfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot)))))
 
-	mux.HandleFunc("/healthz", handlerReadiness)
-	mux.HandleFunc("/metrics", cfg.handlerMetrics)
-	mux.HandleFunc("/reset", cfg.handlerReset)
+	mux.HandleFunc("GET /api/healthz", handlerReadiness)
+	mux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
+	mux.HandleFunc("/api/reset", cfg.handlerReset)
+	mux.HandleFunc("POST /api/validate_chirp", handlerValidadeDecR)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
