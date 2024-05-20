@@ -14,6 +14,6 @@ type DBStructure struct {
 }
 
 type Chirp struct {
-	id   int
-	body string
+	Id   int
+	Body string
 }
