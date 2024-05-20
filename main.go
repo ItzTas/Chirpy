@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	os.Remove(database_path)
 	const filepathRoot = "."
 	const port = "8080"
 	cfg := apiConfig{}
@@ -16,7 +18,7 @@ func main() {
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	mux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
 	mux.HandleFunc("GET /api/reset", cfg.handlerReset)
-	// mux.HandleFunc("POST /api/chirps")
+	mux.HandleFunc("POST /api/chirps", handleChirpPost)
 
 	srv := &http.Server{
 		Addr:    ":" + port,

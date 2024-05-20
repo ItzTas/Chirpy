@@ -13,5 +13,4 @@ func NewDB(path string) (*DB, error) {
 		return nil, err
 	}
 	return db, nil
-
 }

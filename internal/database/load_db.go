@@ -6,6 +6,8 @@ import (
 )
 
 func (db *DB) loadDB() (DBStructure, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
 	dat, err := os.ReadFile(db.path)
 	if err != nil {
 		return DBStructure{}, err

@@ -6,6 +6,8 @@ import (
 )
 
 func (db *DB) writeDB(dbStructure DBStructure) error {
+	db.mux.Lock()
+	defer db.mux.Unlock()
 	dat, err := json.Marshal(dbStructure)
 	if err != nil {
 		return err
