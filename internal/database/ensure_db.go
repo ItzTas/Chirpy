@@ -10,6 +10,7 @@ func (db *DB) ensureDB() error {
 		if errors.Is(err, os.ErrNotExist) {
 			initialData := DBStructure{
 				Chirps: make(map[int]Chirp),
+				Users:  make(map[int]User),
 			}
 			if err = db.writeDB(initialData); err != nil {
 				return err

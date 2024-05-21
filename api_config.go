@@ -3,10 +3,14 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/ItzTass/Chirpy/internal/database"
 )
 
 type apiConfig struct {
+	emails      []string
 	fileservers int
+	DB          *database.DB
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {

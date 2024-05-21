@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"sort"
-
-	"github.com/ItzTass/Chirpy/internal/database"
+	"strconv"
 )
 
-func handleChirpPost(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handleChirpPost(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body string `json:"body"`
 	}
@@ -23,12 +22,7 @@ func handleChirpPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := database.NewDB(database_path)
-	if err != nil {
-		respondWithErr(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	chirp, err := db.CreateChirp(params.Body)
+	chirp, err := cfg.DB.CreateChirp(params.Body)
 	if err != nil {
 		respondWithErr(w, http.StatusInternalServerError, err.Error())
 		return
@@ -37,18 +31,39 @@ func handleChirpPost(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusCreated, chirp)
 }
 
-func handleChirpsGet(w http.ResponseWriter, r *http.Request) {
-	db, err := database.NewDB(database_path)
-	if err != nil {
-		respondWithErr(w, http.StatusInternalServerError, err.Error())
-	}
+func (cfg *apiConfig) handleChirpsGet(w http.ResponseWriter, r *http.Request) {
 
-	chirps, err := db.GetChirps()
+	chirps, err := cfg.DB.GetChirps()
 	if err != nil {
 		respondWithErr(w, http.StatusInternalServerError, err.Error())
+		return
 	}
 	sort.Slice(chirps, func(i, j int) bool {
 		return chirps[i].Id < chirps[j].Id
 	})
 	respondWithJSON(w, http.StatusOK, chirps)
+}
+
+func (cfg *apiConfig) handleChirpGetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("chirpID"))
+	if err != nil {
+		respondWithErr(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	chirps, err := cfg.DB.GetChirps()
+	if err != nil {
+		respondWithErr(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	for _, chirp := range chirps {
+		if chirp.Id == id {
+			respondWithJSON(w, http.StatusOK, chirp)
+			return
+		}
+	}
+
+	respondWithErr(w, http.StatusNotFound, http.StatusText(http.StatusNotFound))
+
 }

@@ -2,8 +2,6 @@ package main
 
 import (
 	"net/http"
-	"slices"
-	"strings"
 )
 
 // func handlerValidade(w http.ResponseWriter, r *http.Request) {
@@ -41,13 +39,13 @@ func validadeMaxLenght(w http.ResponseWriter, leng int) bool {
 	return true
 }
 
-func validadeProfane(toV string) string {
-	words := strings.Split(toV, " ")
-	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
-	for i, word := range words {
-		if slices.Contains(profaneWords, strings.ToLower(word)) {
-			words[i] = "****"
-		}
-	}
-	return strings.Join(words, " ")
-}
+// func validadeProfane(toV string) string {
+// 	words := strings.Split(toV, " ")
+// 	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
+// 	for i, word := range words {
+// 		if slices.Contains(profaneWords, strings.ToLower(word)) {
+// 			words[i] = "****"
+// 		}
+// 	}
+// 	return strings.Join(words, " ")
+// }
