@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/ItzTass/Chirpy/internal/database"
+	"github.com/joho/godotenv"
 )
 
 func addDebugFlag() {
@@ -25,6 +26,8 @@ func addDebugFlag() {
 }
 
 func main() {
+	godotenv.Load()
+	jwtSecret := os.Getenv("JWT_SECRET")
 	addDebugFlag()
 	const filepathRoot = "."
 	const port = "8080"
@@ -33,7 +36,8 @@ func main() {
 		log.Fatal(err)
 	}
 	cfg := apiConfig{
-		DB: db,
+		DB:        db,
+		JWTSecret: jwtSecret,
 	}
 
 	mux := http.NewServeMux()
@@ -47,6 +51,7 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.handleChirpGetByID)
 	mux.HandleFunc("POST /api/users", cfg.createUser)
 	mux.HandleFunc("POST /api/login", cfg.handleLogin)
+	//mux.HandleFunc("PUT /api/users", cfg.handleUsersPUT)
 
 	srv := &http.Server{
 		Addr:    ":" + port,

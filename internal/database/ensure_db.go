@@ -2,7 +2,10 @@ package database
 
 import (
 	"errors"
+	"net/http"
 	"os"
+
+	requesterror "github.com/ItzTass/Chirpy/internal/requestError"
 )
 
 func (db *DB) ensureDB() error {
@@ -13,10 +16,10 @@ func (db *DB) ensureDB() error {
 				Users:  make(map[int]User),
 			}
 			if err = db.writeDB(initialData); err != nil {
-				return err
+				return requesterror.NewRequestErr(http.StatusInternalServerError, err.Error())
 			}
 		} else {
-			return err
+			return requesterror.NewRequestErr(http.StatusInternalServerError, err.Error())
 		}
 	}
 	return nil

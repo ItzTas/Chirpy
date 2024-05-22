@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+
+	requesterror "github.com/ItzTass/Chirpy/internal/requestError"
+	responsestype "github.com/ItzTass/Chirpy/internal/responses"
 )
 
 func (cfg *apiConfig) handleChirpPost(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +18,7 @@ func (cfg *apiConfig) handleChirpPost(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithErr(w, http.StatusInternalServerError, err.Error())
+		requesterror.SendreqErr(w, err, "Could not decode params")
 		return
 	}
 	if !validadeMaxLenght(w, len(params.Body)) {
@@ -24,46 +27,46 @@ func (cfg *apiConfig) handleChirpPost(w http.ResponseWriter, r *http.Request) {
 
 	chirp, err := cfg.DB.CreateChirp(params.Body)
 	if err != nil {
-		respondWithErr(w, http.StatusInternalServerError, err.Error())
+		requesterror.SendreqErr(w, err, "Internal Server Error")
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, chirp)
+	responsestype.RespondWithJSON(w, http.StatusCreated, chirp)
 }
 
 func (cfg *apiConfig) handleChirpsGet(w http.ResponseWriter, r *http.Request) {
 
 	chirps, err := cfg.DB.GetChirps()
 	if err != nil {
-		respondWithErr(w, http.StatusInternalServerError, err.Error())
+		requesterror.SendreqErr(w, err, "Internal Server Error")
 		return
 	}
 	sort.Slice(chirps, func(i, j int) bool {
 		return chirps[i].Id < chirps[j].Id
 	})
-	respondWithJSON(w, http.StatusOK, chirps)
+	responsestype.RespondWithJSON(w, http.StatusOK, chirps)
 }
 
 func (cfg *apiConfig) handleChirpGetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("chirpID"))
 	if err != nil {
-		respondWithErr(w, http.StatusNotFound, err.Error())
+		requesterror.SendreqErr(w, err, "Internal Server Error")
 		return
 	}
 
 	chirps, err := cfg.DB.GetChirps()
 	if err != nil {
-		respondWithErr(w, http.StatusInternalServerError, err.Error())
+		requesterror.SendreqErr(w, err, "Internal Server Error")
 		return
 	}
 
 	for _, chirp := range chirps {
 		if chirp.Id == id {
-			respondWithJSON(w, http.StatusOK, chirp)
+			responsestype.RespondWithJSON(w, http.StatusOK, chirp)
 			return
 		}
 	}
 
-	respondWithErr(w, http.StatusNotFound, http.StatusText(http.StatusNotFound))
+	responsestype.RespondWithErr(w, http.StatusNotFound, http.StatusText(http.StatusNotFound))
 
 }

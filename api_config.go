@@ -8,9 +8,9 @@ import (
 )
 
 type apiConfig struct {
-	emails      []string
 	fileservers int
 	DB          *database.DB
+	JWTSecret   string
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
