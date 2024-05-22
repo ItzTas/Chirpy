@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -11,47 +10,60 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func addDebugFlag() {
-	dgb := flag.Bool("debug", false, "Enable debug mode")
-	flag.Parse()
-	if *dgb {
-		fmt.Println("Debug mode enabled")
-		err := os.Remove(database_path)
-		if err != nil && !os.IsNotExist(err) {
-			log.Fatalf("Failed to remove database file: %v", err)
-		}
-	} else {
-		fmt.Println("No debug mode")
-	}
+type apiConfig struct {
+	fileserverHits int
+	DB             *database.DB
+	jwtSecret      string
 }
 
 func main() {
-	godotenv.Load()
-	jwtSecret := os.Getenv("JWT_SECRET")
-	addDebugFlag()
 	const filepathRoot = "."
 	const port = "8080"
-	db, err := database.NewDB(database_path)
+
+	godotenv.Load(".env")
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+
+	db, err := database.NewDB("database.json")
 	if err != nil {
 		log.Fatal(err)
 	}
-	cfg := apiConfig{
-		DB:        db,
-		JWTSecret: jwtSecret,
+
+	dbg := flag.Bool("debug", false, "Enable debug mode")
+	flag.Parse()
+	if dbg != nil && *dbg {
+		err := db.ResetDB()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	apiCfg := apiConfig{
+		fileserverHits: 0,
+		DB:             db,
+		jwtSecret:      jwtSecret,
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("GET /app/*", http.StripPrefix("/app", cfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot)))))
+	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	mux.Handle("/app/*", fsHandler)
 
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
-	mux.HandleFunc("GET /admin/metrics", cfg.handlerMetrics)
-	mux.HandleFunc("GET /api/reset", cfg.handlerReset)
-	mux.HandleFunc("POST /api/chirps", cfg.handleChirpPost)
-	mux.HandleFunc("GET /api/chirps", cfg.handleChirpsGet)
-	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.handleChirpGetByID)
-	mux.HandleFunc("POST /api/users", cfg.createUser)
-	mux.HandleFunc("POST /api/login", cfg.handleLogin)
-	//mux.HandleFunc("PUT /api/users", cfg.handleUsersPUT)
+	mux.HandleFunc("GET /api/reset", apiCfg.handlerReset)
+
+	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
+
+	mux.HandleFunc("POST /api/users", apiCfg.handlerUsersCreate)
+	mux.HandleFunc("PUT /api/users", apiCfg.handlerUsersUpdate)
+
+	mux.HandleFunc("POST /api/chirps", apiCfg.handlerChirpsCreate)
+	mux.HandleFunc("GET /api/chirps", apiCfg.handlerChirpsRetrieve)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerChirpsGet)
+
+	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
