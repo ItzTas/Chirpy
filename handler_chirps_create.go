@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/ItzTass/Chirpy/internal/auth"
 )
 
 type Chirp struct {
-	ID   int    `json:"id"`
-	Body string `json:"body"`
+	ID       int    `json:"id"`
+	Body     string `json:"body"`
+	AuthorID int    `json:"author_id"`
 }
 
 func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
@@ -31,15 +35,34 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	chirp, err := cfg.DB.CreateChirp(cleaned)
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+
+	userIDstr, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Could not validate token")
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDstr)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not Create integer id")
+		return
+	}
+
+	chirp, err := cfg.DB.CreateChirp(cleaned, userID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create chirp")
 		return
 	}
 
 	respondWithJSON(w, http.StatusCreated, Chirp{
-		ID:   chirp.ID,
-		Body: chirp.Body,
+		ID:       chirp.ID,
+		Body:     chirp.Body,
+		AuthorID: userID,
 	})
 }
 

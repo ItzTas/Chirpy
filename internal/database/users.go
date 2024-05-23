@@ -3,9 +3,10 @@ package database
 import "errors"
 
 type User struct {
-	ID             int    `json:"id"`
-	Email          string `json:"email"`
-	HashedPassword string `json:"hashed_password"`
+	ID             int          `json:"id"`
+	Email          string       `json:"email"`
+	HashedPassword string       `json:"hashed_password"`
+	RefreshToken   RefreshToken `json:"refresh_token"`
 }
 
 var ErrAlreadyExists = errors.New("already exists")
@@ -58,6 +59,21 @@ func (db *DB) GetUserByEmail(email string) (User, error) {
 
 	for _, user := range dbStructure.Users {
 		if user.Email == email {
+			return user, nil
+		}
+	}
+
+	return User{}, ErrNotExist
+}
+
+func (db *DB) GetUserByRefreshToken(refreshTokenString string) (User, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	for _, user := range dbStructure.Users {
+		if user.RefreshToken.Token == refreshTokenString {
 			return user, nil
 		}
 	}

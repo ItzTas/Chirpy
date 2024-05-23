@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,10 +13,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// ErrNoAuthHeaderIncluded -
 var ErrNoAuthHeaderIncluded = errors.New("not auth header included in request")
 
-// HashPassword -
 func HashPassword(password string) (string, error) {
 	dat, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -23,12 +23,10 @@ func HashPassword(password string) (string, error) {
 	return string(dat), nil
 }
 
-// CheckPasswordHash -
 func CheckPasswordHash(password, hash string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
-// MakeJWT -
 func MakeJWT(userID int, tokenSecret string, expiresIn time.Duration) (string, error) {
 	signingKey := []byte(tokenSecret)
 
@@ -41,7 +39,6 @@ func MakeJWT(userID int, tokenSecret string, expiresIn time.Duration) (string, e
 	return token.SignedString(signingKey)
 }
 
-// ValidateJWT -
 func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 	claimsStruct := jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(
@@ -69,7 +66,6 @@ func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 	return userIDString, nil
 }
 
-// GetBearerToken -
 func GetBearerToken(headers http.Header) (string, error) {
 	authHeader := headers.Get("Authorization")
 	if authHeader == "" {
@@ -81,4 +77,14 @@ func GetBearerToken(headers http.Header) (string, error) {
 	}
 
 	return splitAuth[1], nil
+}
+
+func GenerateRefreshToken() (string, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	encodedStr := hex.EncodeToString(b)
+	return encodedStr, nil
 }

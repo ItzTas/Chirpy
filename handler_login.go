@@ -8,15 +8,20 @@ import (
 	"github.com/ItzTass/Chirpy/internal/auth"
 )
 
+const (
+	accessTokenDuration  = 1 * time.Hour
+	refreshTokenDuration = 60 * 24 * time.Hour
+)
+
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Password         string `json:"password"`
-		Email            string `json:"email"`
-		ExpiresInSeconds int    `json:"expires_in_seconds"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 	type response struct {
 		User
-		Token string `json:"token"`
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -39,16 +44,15 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defaultExpiration := 60 * 60 * 24
-	if params.ExpiresInSeconds == 0 {
-		params.ExpiresInSeconds = defaultExpiration
-	} else if params.ExpiresInSeconds > defaultExpiration {
-		params.ExpiresInSeconds = defaultExpiration
-	}
-
-	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, time.Duration(params.ExpiresInSeconds)*time.Second)
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, accessTokenDuration)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create JWT")
+		return
+	}
+
+	refToken, err := cfg.DB.CreateAndStoreRefTokenToBD(user.ID, refreshTokenDuration)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create Refresh token")
 		return
 	}
 
@@ -57,6 +61,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			ID:    user.ID,
 			Email: user.Email,
 		},
-		Token: token,
+		Token:        token,
+		RefreshToken: refToken.Token,
 	})
 }

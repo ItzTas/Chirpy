@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -35,6 +36,7 @@ func main() {
 	dbg := flag.Bool("debug", false, "Enable debug mode")
 	flag.Parse()
 	if dbg != nil && *dbg {
+		fmt.Println("In debug mode")
 		err := db.ResetDB()
 		if err != nil {
 			log.Fatal(err)
@@ -64,6 +66,9 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerChirpsGet)
 
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
+
+	mux.HandleFunc("POST /api/refresh", apiCfg.handleRefresh)
+	mux.HandleFunc("POST /api/revoke", apiCfg.handleRevoke)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
