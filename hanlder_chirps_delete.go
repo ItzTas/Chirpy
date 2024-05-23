@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -40,8 +39,6 @@ func (cfg *apiConfig) handlerChirpsDelete(w http.ResponseWriter, r *http.Request
 	}
 
 	if chirp.AuthorID != userID {
-		fmt.Println(userID)
-		fmt.Println(chirp.AuthorID)
 		respondWithError(w, http.StatusForbidden, "Can't delete the chirpy of another author")
 		return
 	}

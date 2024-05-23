@@ -7,7 +7,7 @@ import (
 	"github.com/ItzTass/Chirpy/internal/auth"
 )
 
-func (cfg *apiConfig) handleRefresh(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, r *http.Request) {
 	type returnVals struct {
 		Token string `json:"token"`
 	}

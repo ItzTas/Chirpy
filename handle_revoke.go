@@ -6,7 +6,7 @@ import (
 	"github.com/ItzTass/Chirpy/internal/auth"
 )
 
-func (cfg *apiConfig) handleRevoke(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, r *http.Request) {
 	refToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, err.Error())
