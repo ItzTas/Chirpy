@@ -1,0 +1,17 @@
+# APP endpoint
+
+## This endpoint shows the html page
+
+### GET /app
+
+```html
+
+<html>
+
+<body>
+    <h1>Welcome to Chirpy</h1>
+</body>
+
+</html>
+
+```

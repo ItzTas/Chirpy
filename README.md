@@ -4,4 +4,4 @@
 
 This is a fictitous social media app called chirpy, this project is specially the api part of the app
 
-to see the end points go to (/docs)[]
+to see the end points go to (/docs)[https://github.com/ItzTas/Chirpy/tree/main/docs]
