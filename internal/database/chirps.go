@@ -71,20 +71,20 @@ func (db *DB) DeleteChirp(id int) error {
 	return nil
 }
 
-// func (db *DB) GetAuthorChirps(AuthorID int) ([]Chirp, error) {
-// 	dbStructure, err := db.loadDB()
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (db *DB) GetAuthorChirps(AuthorID int) ([]Chirp, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return nil, err
+	}
 
-// 	chirps := make([]Chirp, 0, len(dbStructure.Chirps))
-// 	for _, chirp := range dbStructure.Chirps {
-// 		if chirp.AuthorID == AuthorID {
-// 			chirps = append(chirps, chirp)
-// 		}
-// 	}
-// 	if err := db.writeDB(dbStructure); err != nil {
-// 		return nil, err
-// 	}
-// 	return chirps, nil
-// }
+	chirps := make([]Chirp, 0, len(dbStructure.Chirps))
+	for _, chirp := range dbStructure.Chirps {
+		if chirp.AuthorID == AuthorID {
+			chirps = append(chirps, chirp)
+		}
+	}
+	if err := db.writeDB(dbStructure); err != nil {
+		return nil, err
+	}
+	return chirps, nil
+}

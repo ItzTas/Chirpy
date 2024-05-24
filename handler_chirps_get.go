@@ -6,6 +6,11 @@ import (
 	"strconv"
 )
 
+const (
+	sortTypeAsc  = "asc"
+	sortTypeDesc = "desc"
+)
+
 func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
 	chirpIDString := r.PathValue("chirpID")
 	chirpID, err := strconv.Atoi(chirpIDString)
@@ -28,6 +33,17 @@ func (cfg *apiConfig) handlerChirpsGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Request) {
+	authorID := r.URL.Query().Get("author_id")
+	if authorID != "" {
+		cfg.chirpsRetrieveFromAuthor(w, r)
+		return
+	}
+
+	sortType := r.URL.Query().Get("sort")
+	if sortType != sortTypeAsc && sortType != sortTypeDesc {
+		sortType = sortTypeAsc
+	}
+
 	dbChirps, err := cfg.DB.GetChirps()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps")
@@ -43,9 +59,33 @@ func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Reque
 		})
 	}
 
-	sort.Slice(chirps, func(i, j int) bool {
-		return chirps[i].ID < chirps[j].ID
-	})
+	if sortType == sortTypeAsc {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].ID < chirps[j].ID
+		})
+	} else if sortType == sortTypeDesc {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].ID > chirps[j].ID
+		})
+	}
 
 	respondWithJSON(w, http.StatusOK, chirps)
+}
+
+func (cfg *apiConfig) chirpsRetrieveFromAuthor(w http.ResponseWriter, r *http.Request) {
+	authorID, err := strconv.Atoi(r.URL.Query().Get("author_id"))
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid author id")
+		return
+	}
+	authorChirps, err := cfg.DB.GetAuthorChirps(authorID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+	sort.Slice(authorChirps, func(i, j int) bool {
+		return authorChirps[i].ID < authorChirps[j].ID
+	})
+
+	respondWithJSON(w, http.StatusOK, authorChirps)
 }
